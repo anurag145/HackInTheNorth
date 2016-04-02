@@ -16,8 +16,10 @@
 
 package experiment.com.example.anurag.hackinthenorth;
 
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -26,11 +28,33 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RadioButton;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+
 /**
  * Demonstrates the use of {@link RecyclerView} with a {@link LinearLayoutManager} and a
  * {@link GridLayoutManager}.
  */
 public class RecyclerViewFragment extends Fragment {
+
+    String Json_String; String json;
+    JSONArray data=null;
+    private static final String TAG_RESULTS="result";
+    private static final String TAG_ID = "id";
+    private static final String TAG_NAME = "username";
+    private static final String TAG_ADD ="password";
+    ArrayList<HashMap<String, String>> personList;
 
     private static final String TAG = "RecyclerViewFragment";
     private static final String KEY_LAYOUT_MANAGER = "layoutManager";
@@ -49,7 +73,7 @@ public class RecyclerViewFragment extends Fragment {
     protected RecyclerView mRecyclerView;
     protected CustomAdapter mAdapter;
     protected RecyclerView.LayoutManager mLayoutManager;
-    protected String[] mDataset;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -57,7 +81,93 @@ public class RecyclerViewFragment extends Fragment {
 
         // Initialize dataset, this data would usually come from a local content provider or
         // remote server.
-        initDataset();
+
+        getdata();
+
+
+        try{
+
+            JSONObject jsonObj = new JSONObject(json);
+            data=jsonObj.getJSONArray(TAG_RESULTS);
+            for(int i=0;i<data.length();i++){
+                JSONObject c = data.getJSONObject(i);
+                String id = c.getString(TAG_ID);
+                String name = c.getString(TAG_NAME);
+                String address = c.getString(TAG_ADD);
+
+                HashMap<String,String> persons = new HashMap<String,String>();
+
+                persons.put(TAG_ID,id);
+                persons.put(TAG_NAME,name);
+                persons.put(TAG_ADD,address);
+
+                personList.add(persons);
+            }
+
+
+
+        }catch(JSONException e)
+        {
+            e.printStackTrace();
+        }
+
+
+    }
+    public void getdata() {
+        new BackgroundTask().execute();
+    }
+
+    public class BackgroundTask extends AsyncTask<Void, Void, String> {
+        String Json_Url;
+
+        @Override
+        protected void onPreExecute() {
+            Json_Url = "http://simplifiedcoding.16mb.com/get-data.php";
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+            try {
+
+                URL url = new URL(Json_Url);
+                HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+                InputStream inputStream= httpURLConnection.getInputStream();
+                BufferedReader bufferedReader= new BufferedReader(new InputStreamReader(inputStream));
+                StringBuilder stringBuilder= new StringBuilder();
+                while((Json_String= bufferedReader.readLine())!=null)
+                {
+
+                    stringBuilder.append(Json_String+"\n");
+
+                }
+                bufferedReader.close();
+                inputStream.close();
+                httpURLConnection.disconnect();
+                return  stringBuilder.toString().trim();
+
+
+            }catch (MalformedURLException e)
+            {
+                e.printStackTrace();
+
+            }
+            catch(IOException e)
+            {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onProgressUpdate(Void... values) {
+            super.onProgressUpdate(values);
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            json=result;
+        }
     }
 
     @Override
@@ -83,7 +193,7 @@ public class RecyclerViewFragment extends Fragment {
         }
         setRecyclerViewLayoutManager(mCurrentLayoutManagerType);
 
-        mAdapter = new CustomAdapter(mDataset);
+        mAdapter = new CustomAdapter(personList);
         // Set CustomAdapter as the adapter for RecyclerView.
         mRecyclerView.setAdapter(mAdapter);
         // END_INCLUDE(initializeRecyclerView)
@@ -128,10 +238,5 @@ public class RecyclerViewFragment extends Fragment {
      * Generates Strings for RecyclerView's adapter. This data would usually come
      * from a local content provider or remote server.
      */
-    private void initDataset() {
-        mDataset = new String[DATASET_COUNT];
-        for (int i = 0; i < DATASET_COUNT; i++) {
-            mDataset[i] = "This is element #" + i;
-        }
-    }
+
 }

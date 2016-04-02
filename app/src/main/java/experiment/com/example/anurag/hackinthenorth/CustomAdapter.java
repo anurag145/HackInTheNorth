@@ -24,16 +24,21 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 
 
 /**
  * Provide views to RecyclerView with data from mDataSet.
  */
 public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.ViewHolder> {
+    private static final String TAG_ID = "id";
+    private static final String TAG_NAME = "username";
+    private static final String TAG_ADD ="password";
     private static final String TAG = "CustomAdapter";
 
     private String[] mDataSet;
-
+    ArrayList<HashMap<String, String>> personList;
     // BEGIN_INCLUDE(recyclerViewSampleViewHolder)
     /**
      * Provide a reference to the type of views that you are using (custom ViewHolder)
@@ -65,10 +70,10 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.ViewHolder
     /**
      * Initialize the dataset of the Adapter.
      *
-     * @param dataSet String[] containing the data to populate views to be used by RecyclerView.
+
      */
-    public CustomAdapter(String[] dataSet) {
-        mDataSet = dataSet;
+    public CustomAdapter(ArrayList<HashMap<String, String>> personList) {
+        this.personList=personList;
     }
 
     // BEGIN_INCLUDE(recyclerViewOnCreateViewHolder)
@@ -88,16 +93,17 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.ViewHolder
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, final int position) {
 
-
+            HashMap<String,String> person1= new HashMap<>();
+             person1=personList.get(position);
         // Get element from your dataset at this position and replace the contents of the view
         // with that element
-        viewHolder.getTextView().setText(mDataSet[position]);
+        viewHolder.getTextView().setText(person1.get(TAG_ID));
     }
     // END_INCLUDE(recyclerViewOnBindViewHolder)
 
     // Return the size of your dataset (invoked by the layout manager)
     @Override
     public int getItemCount() {
-        return mDataSet.length;
+        return personList.size();
     }
 }
